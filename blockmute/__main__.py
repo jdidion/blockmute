@@ -23,7 +23,7 @@ def get_access_token(consumer_key, consumer_secret):
     resp = oauth_client.fetch_access_token(ACCESS_TOKEN_URL)
     return resp.get('oauth_token'), resp.get('oauth_token_secret')
 
-def blockmute(api):
+def blockmute(api, sleep_secs=300):
     mutes = set(api.GetMutesIDs())
     blocks = set(api.GetBlocksIDs())
 
@@ -34,8 +34,8 @@ def blockmute(api):
                 api.CreateBlock(user_id)
                 break
             except:
-                print("Exceeded rate limit; sleeping for 15 minutes")
-                time.sleep(15*60)
+                print("Exceeded rate limit; sleeping for {} seconds".format(sleep_secs))
+                time.sleep(sleep_secs)
 
     new_mutes = blocks - mutes
     for user_id in tqdm(new_mutes):
@@ -44,8 +44,8 @@ def blockmute(api):
                 api.CreateMute(user_id)
                 break
             except:
-                print("Exceeded rate limit; sleeping for 15 minutes")
-                time.sleep(15*60)
+                print("Exceeded rate limit; sleeping for {} seconds".format(sleep_secs))
+                time.sleep(sleep_secs)
 
 def main():
     parser = ArgumentParser()
@@ -53,6 +53,7 @@ def main():
     parser.add_argument('-cs', '--consumer-secret')
     parser.add_argument('-tk', '--token-key', default=None)
     parser.add_argument('-ts', '--token-secret', default=None)
+    parser.add_argument('-s', '--sleep-secs', type=int, default=15*60)
     args = parser.parse_args()
 
     token_key = args.token_key
@@ -67,7 +68,7 @@ def main():
         access_token_secret=token_secret,
         sleep_on_rate_limit=True)
 
-    blockmute(api)
+    blockmute(api, sleep_secs=args.sleep_secs)
 
 if __name__ == '__main__':
     main()
